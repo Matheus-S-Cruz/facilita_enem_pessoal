@@ -8,6 +8,7 @@
 import FamilyRestroomOutlined from '@mui/icons-material/FamilyRestroomOutlined'
 import PlaceOutlined from '@mui/icons-material/PlaceOutlined'
 import SchoolOutlined from '@mui/icons-material/SchoolOutlined'
+import CartaoOrigem from './origem/CartaoOrigem'
 import CartaoRegional from './regional/CartaoRegional'
 
 export const MODULOS = [
@@ -25,7 +26,7 @@ export const MODULOS = [
     pergunta: 'Quanto a renda da família e a escola pesam na sua posição?',
     campos: ['renda', 'tipo_escola'],
     icone: SchoolOutlined,
-    Componente: null,
+    Componente: CartaoOrigem,
   },
   {
     id: 'familia',

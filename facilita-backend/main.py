@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 
 from auth_routes import auth_router
 from gold import GrupoInexistente
+from origem_routes import origem_router
 from radar_routes import radar_router
 from regional_routes import regional_router
 
@@ -40,3 +41,4 @@ async def grupo_inexistente(request: Request, erro: GrupoInexistente):
 app.include_router(auth_router)
 app.include_router(radar_router)
 app.include_router(regional_router)
+app.include_router(origem_router)
