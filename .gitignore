@@ -6,8 +6,14 @@ venv/
 __pycache__/
 *.pyc
 
-# Saída do pipeline de ETL (gerada, não versionada)
-data/
+# Saída do pipeline de ETL (gerada). Bronze e Silver são pesados e descartáveis.
+# A camada Gold (~11 MB) é versionada: é o que a API lê, então quem clona o
+# repositório roda o back-end sem precisar baixar os microdados e reprocessar.
+/data/*
+!/data/gold/
+
+# ZIPs parciais de download interrompido
+*.parcial
 
 # Material de apoio local (aulas, enunciados, rascunhos): não versionado
 contexto/
