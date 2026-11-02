@@ -10,6 +10,11 @@ microdados oficiais do INEP (2022 e 2023).
 Equipe: Matheus Silva da Cruz (líder), Nicolas André Krause de Mello e João Paulo
 Araujo Cappeletti.
 
+> **Primeira vez aqui?** O **[SETUP.md](SETUP.md)** tem o passo a passo completo de
+> instalação (Windows, Linux e Mac), com os erros comuns já resolvidos. Para só
+> ver o site rodar, você precisa apenas do back-end e do front-end — a camada de
+> dados já vem pronta no repositório.
+
 ## Estrutura
 
 ```
@@ -86,20 +91,24 @@ python etl/run_pipeline.py --sem-download
 ## Back-end
 
 API em FastAPI que carrega a Gold em memória e calcula percentil e Z-Score.
+**Requer Python 3.12+** (não usa Spark nem Java). Passo a passo detalhado e
+solução de problemas no [SETUP.md](SETUP.md#3-back-end-api).
 
 ```bash
 cd facilita-backend
-python3 -m venv venv
-. venv/bin/activate
+python3.12 -m venv venv
+. venv/bin/activate                     # Windows: .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-uvicorn main:app --reload --port 8001   # documentação em http://localhost:8001/docs
+python -m uvicorn main:app --reload --port 8001   # docs em http://localhost:8001/docs
 python -m pytest tests                  # testes com uma Gold sintética, sem precisar dos microdados
 ```
 
 ## Front-end
 
-React + Chakra UI (ícones do Material UI). Em desenvolvimento, as chamadas a `/api` vão para o back-end
-na porta 8001 (outra porta: `API_URL=http://localhost:8000 npm run dev`).
+React + Chakra UI (ícones do Material UI). Precisa de Node.js 18+. Em
+desenvolvimento, as chamadas a `/api` vão para o back-end na porta 8001 (outra
+porta: `API_URL=http://localhost:8000 npm run dev`). Veja o
+[SETUP.md](SETUP.md#4-front-end-site) para o checklist de verificação.
 
 ```bash
 cd facilita-frontend
