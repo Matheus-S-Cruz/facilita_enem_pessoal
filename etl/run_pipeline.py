@@ -17,6 +17,7 @@ import gold
 import silver
 import volumetria
 from config import criar_spark
+from verificar_ambiente import verificar_python
 
 
 def garantir_microdados() -> None:
@@ -33,6 +34,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Executa o pipeline ETL completo do Radar ENEM.")
     parser.add_argument("--sem-download", action="store_true", help="não baixa microdados; assume que já estão extraídos")
     args = parser.parse_args()
+
+    # Barra cedo um Python incompatível, antes de baixar GBs ou subir o Spark.
+    verificar_python()
 
     if not args.sem_download:
         garantir_microdados()
