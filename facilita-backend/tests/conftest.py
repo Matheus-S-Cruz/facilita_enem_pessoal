@@ -37,6 +37,13 @@ def gold() -> Gold:
     escola_3 = [(620.0 + 2 * i, 1) for i in range(150)]
     cruz_b2 = [(410.0 + 2 * i, 1) for i in range(150)]
     cruz_b3 = [(500.0, 10)]
+    # Módulo família: mãe com ensino médio (E) tira menos que com pós (G);
+    # cor/raça 3 (parda) tem notas mais baixas que 1 (branca). Cor 5 é pequena.
+    mae_e = [(400.0 + 2 * i, 1) for i in range(150)]
+    mae_g = [(600.0 + 2 * i, 1) for i in range(150)]
+    cor_1 = [(620.0 + 2 * i, 1) for i in range(150)]
+    cor_3 = [(420.0 + 2 * i, 1) for i in range(150)]
+    cor_5 = [(500.0, 10)]
     linhas = []
     for area in AREAS:
         linhas += _grupo(area, "GERAL", "TODOS", brasil)
@@ -49,6 +56,11 @@ def gold() -> Gold:
         linhas += _grupo(area, "TIPO_ESCOLA", "3", escola_3)
         linhas += _grupo(area, "RENDA_X_TIPO_ESCOLA", "B|2", cruz_b2)
         linhas += _grupo(area, "RENDA_X_TIPO_ESCOLA", "B|3", cruz_b3)
+        linhas += _grupo(area, "ESCOLARIDADE_MAE", "E", mae_e)
+        linhas += _grupo(area, "ESCOLARIDADE_MAE", "G", mae_g)
+        linhas += _grupo(area, "COR_RACA", "1", cor_1)
+        linhas += _grupo(area, "COR_RACA", "3", cor_3)
+        linhas += _grupo(area, "COR_RACA", "5", cor_5)
     distribuicao = pd.DataFrame(linhas)
 
     estatisticas = []
