@@ -1,9 +1,12 @@
-fastapi==0.141.1
-uvicorn==0.53.0
-pandas==3.0.6
-numpy==2.5.3
-pyarrow==26.0.0
+# Back-end do Radar ENEM. Requer Python 3.12+ (numpy/pandas abaixo exigem isso).
+# Versões com piso mínimo (>=) em vez de fixas (==) para instalar em qualquer
+# Python 3.12+ sem erro de "No matching distribution".
+fastapi>=0.141,<1.0
+uvicorn>=0.53,<1.0
+pandas>=2.2,<4.0
+numpy>=2.0,<3.0
+pyarrow>=17.0
 
 # testes
-pytest==9.1.1
-httpx==0.28.1
+pytest>=8.0
+httpx>=0.28
