@@ -17,6 +17,7 @@ etl/                 pipeline PySpark em arquitetura medalhão
   config.py          caminhos, anos, colunas e sessão Spark
   fontes.json        URLs, tamanho e checksum dos microdados (manifesto de origem)
   baixar_microdados.py  baixa, verifica (SHA-256) e extrai os microdados do INEP
+  verificar_ambiente.py checa, antes do Spark, se a versão do Python é compatível
   bronze.py          CSV do INEP -> Parquet, sem alterar o conteúdo
   silver.py          seleção de colunas, tipagem e validação com motivo de rejeição
   gold.py            distribuição de notas e estatísticas por recorte (o que a API lê)
@@ -62,8 +63,12 @@ python etl/baixar_microdados.py --verificar  # confere o que já está extraído
 python etl/run_pipeline.py --sem-download
 ```
 
-- **Use Python 3.11 ou 3.12** para o Spark: o PySpark 3.5.3 ainda não suporta
-  versões mais novas (como 3.14), que falham ao rodar o pipeline.
+- **Use Python 3.8 a 3.11** para o Spark: o PySpark 3.5.3 não suporta versões
+  mais novas (como 3.14), que fazem o pipeline falhar sem mensagem clara. O
+  `run_pipeline.py` verifica isso no início e para com uma orientação objetiva se
+  a versão não servir (o 3.12 passa com um aviso). Confira com
+  `python etl/verificar_ambiente.py`. O **back-end** não usa Spark e roda em
+  qualquer Python recente — essa restrição vale só para regenerar a Gold.
 - Os ZIPs ficam em `public/` e são apagados após a extração (use `--manter-zip`
   para conservá-los). Bronze, Silver e os ZIPs **não** são versionados; só a Gold.
 - **Se o download falhar** (o INEP às vezes recusa a conexão), o script tenta de
