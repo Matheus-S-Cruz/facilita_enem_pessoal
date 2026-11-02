@@ -1,0 +1,16 @@
+{
+  "_comentario": "Manifesto das planilhas de origem (microdados do ENEM, INEP). Usado por baixar_microdados.py para baixar e verificar os arquivos. 'sha256' e 'bytes' são preenchidos na primeira verificação bem-sucedida (campo null = ainda não registrado).",
+  "portal": "https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/enem",
+  "anos": {
+    "2022": {
+      "url": "https://download.inep.gov.br/microdados/microdados_enem_2022.zip",
+      "bytes": null,
+      "sha256": null
+    },
+    "2023": {
+      "url": "https://download.inep.gov.br/microdados/microdados_enem_2023.zip",
+      "bytes": null,
+      "sha256": null
+    }
+  }
+}
