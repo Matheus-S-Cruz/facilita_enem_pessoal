@@ -1,91 +1,46 @@
 {
-
   "csv_bruto": {
-
     "bytes": 3345316290,
-
     "arquivos": 2
-
   },
-
   "bronze": {
-
     "bytes": 589891922,
-
     "linhas": 7410060,
-
     "colunas": 78,
-
     "arquivos": 26,
-
     "percentual_do_csv": 17.633
-
   },
-
   "silver_participantes": {
-
     "bytes": 69645246,
-
     "linhas": 4945546,
-
     "colunas": 15,
-
     "arquivos": 2,
-
     "percentual_do_csv": 2.082
-
   },
-
   "silver_rejeitados": {
-
     "bytes": 7701845,
-
     "linhas": 2464514,
-
     "colunas": 3,
-
     "arquivos": 3,
-
     "percentual_do_csv": 0.23
-
   },
-
   "gold_distribuicao": {
-
     "bytes": 10969648,
-
     "linhas": 4662949,
-
     "colunas": 6,
-
     "arquivos": 2,
-
     "percentual_do_csv": 0.328
-
   },
-
   "gold_estatisticas": {
-
     "bytes": 30178,
-
     "linhas": 1380,
-
     "colunas": 12,
-
     "arquivos": 1,
-
     "percentual_do_csv": 0.001
-
   },
-
   "tempo_segundos": {
-
-    "bronze": 46.9,
-
-    "silver": 21.7,
-
-    "gold": 131.0
-
+    "bronze": 53.4,
+    "silver": 16.7,
+    "gold": 78.6
   }
-
 }
