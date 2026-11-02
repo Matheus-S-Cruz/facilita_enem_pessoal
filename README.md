@@ -62,8 +62,15 @@ python etl/baixar_microdados.py --verificar  # confere o que já está extraído
 python etl/run_pipeline.py --sem-download
 ```
 
+- **Use Python 3.11 ou 3.12** para o Spark: o PySpark 3.5.3 ainda não suporta
+  versões mais novas (como 3.14), que falham ao rodar o pipeline.
 - Os ZIPs ficam em `public/` e são apagados após a extração (use `--manter-zip`
   para conservá-los). Bronze, Silver e os ZIPs **não** são versionados; só a Gold.
+- **Se o download falhar** (o INEP às vezes recusa a conexão), o script tenta de
+  novo e, por fim, cai para o `curl`. Se ainda assim não baixar, baixe o ZIP pelo
+  navegador a partir do [portal do INEP](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/enem),
+  salve em `public/microdados_enem_AAAA.zip` e rode o pipeline de novo — ele
+  reaproveita o ZIP que já está lá, sem baixar outra vez.
 - Na primeira execução, o tamanho e o SHA-256 de cada ZIP são gravados em
   `etl/fontes.json`. Nas próximas, o download é conferido contra esse checksum —
   é assim que o projeto detecta um arquivo corrompido ou uma republicação do INEP.

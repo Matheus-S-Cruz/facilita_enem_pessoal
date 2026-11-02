@@ -19,7 +19,9 @@ import hashlib
 import json
 import shutil
 import ssl
+import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -30,6 +32,16 @@ FONTES = Path(__file__).resolve().parent / "fontes.json"
 PUBLIC = RAIZ / "public"
 
 PEDACO = 1024 * 1024  # 1 MiB por leitura, para barra de progresso e baixo uso de memória
+TENTATIVAS = 4  # o INEP derruba conexões de forma intermitente; vale repetir
+
+# O download.inep.gov.br frequentemente recusa clientes que não parecem um
+# navegador (devolve ConnectionReset no handshake). Estes cabeçalhos imitam um.
+CABECALHOS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+    "Accept": "application/zip,application/octet-stream,*/*",
+    "Accept-Language": "pt-BR,pt;q=0.9",
+    "Connection": "keep-alive",
+}
 
 
 def carregar_fontes() -> dict:
@@ -53,46 +65,98 @@ def sha256_de(caminho: Path) -> str:
     return h.hexdigest()
 
 
-def _abrir(url: str, contexto: ssl.SSLContext | None):
-    requisicao = urllib.request.Request(url, headers={"User-Agent": "facilita-enem/1.0"})
-    return urllib.request.urlopen(requisicao, context=contexto)  # noqa: S310 (URL fixa do INEP)
+def _abrir(url: str, contexto: ssl.SSLContext | None, desde: int = 0):
+    cabecalhos = dict(CABECALHOS)
+    if desde:
+        cabecalhos["Range"] = f"bytes={desde}-"  # retoma de onde parou
+    requisicao = urllib.request.Request(url, headers=cabecalhos)
+    return urllib.request.urlopen(requisicao, context=contexto, timeout=120)  # noqa: S310 (URL fixa do INEP)
+
+
+def _contexto_ssl(verificar: bool) -> ssl.SSLContext:
+    contexto = ssl.create_default_context()
+    if not verificar:
+        # download.inep.gov.br costuma ter cadeia de certificado incompleta.
+        contexto.check_hostname = False
+        contexto.verify_mode = ssl.CERT_NONE
+    return contexto
+
+
+def _baixar_urllib(url: str, parcial: Path) -> bool:
+    """Tenta baixar com a biblioteca padrão, com retomada parcial. True se completou."""
+    verificar = True
+    for tentativa in range(1, TENTATIVAS + 1):
+        desde = parcial.stat().st_size if parcial.exists() else 0
+        try:
+            resposta = _abrir(url, _contexto_ssl(verificar), desde)
+        except urllib.error.URLError as erro:
+            if isinstance(erro.reason, ssl.SSLCertVerificationError) and verificar:
+                print("  aviso: certificado SSL do INEP não pôde ser verificado; seguindo sem verificar.")
+                verificar = False
+                continue
+            print(f"  tentativa {tentativa}/{TENTATIVAS} falhou ({erro.reason}); aguardando…")
+            if tentativa == TENTATIVAS:
+                return False
+            time.sleep(3 * tentativa)
+            continue
+
+        # Status 200 recomeça do zero; 206 confirma a retomada do Range.
+        modo = "ab" if desde and resposta.status == 206 else "wb"
+        baixado = desde if modo == "ab" else 0
+        restante = int(resposta.headers.get("Content-Length", 0))
+        total = baixado + restante
+        try:
+            with resposta, parcial.open(modo) as saida:
+                while bloco := resposta.read(PEDACO):
+                    saida.write(bloco)
+                    baixado += len(bloco)
+                    alvo = f" / {total / 1e6:,.0f} MB ({100 * baixado / total:.0f}%)" if total else ""
+                    print(f"\r  baixando {parcial.stem}: {baixado / 1e6:,.0f} MB{alvo}", end="")
+            print()
+            return True
+        except (urllib.error.URLError, ConnectionResetError, TimeoutError) as erro:
+            print(f"\n  conexão interrompida ({erro}); retomando de {parcial.stat().st_size / 1e6:,.0f} MB…")
+            if tentativa == TENTATIVAS:
+                return False
+            time.sleep(3 * tentativa)
+    return False
+
+
+def _baixar_curl(url: str, parcial: Path) -> bool:
+    """Fallback: curl costuma passar onde o urllib é barrado. True se completou."""
+    curl = shutil.which("curl")
+    if not curl:
+        return False
+    print("  tentando com curl (fallback)…")
+    comando = [
+        curl, "-L", "--fail", "--retry", "5", "--retry-delay", "3",
+        "-C", "-",  # retoma download parcial
+        "-A", CABECALHOS["User-Agent"],
+        "-o", str(parcial), url,
+    ]
+    return subprocess.run(comando).returncode == 0  # noqa: S603 (comando montado internamente)
 
 
 def baixar(url: str, destino: Path) -> None:
-    """Download em streaming com progresso simples; grava em .parcial e renomeia no fim.
+    """Baixa para .parcial e renomeia no fim; grava em disco permitindo retomar.
 
-    O servidor do INEP (download.inep.gov.br) costuma apresentar uma cadeia de
-    certificado SSL incompleta. Tentamos a verificação normal primeiro e, só se
-    ela falhar por causa do certificado, repetimos sem verificar — avisando.
+    O servidor do INEP derruba conexões de forma intermitente e recusa clientes
+    que não parecem navegador. Encaramos isso com cabeçalhos de navegador,
+    retentativas com retomada parcial e, se nada disso bastar, um fallback para
+    o curl do sistema.
     """
     parcial = destino.with_suffix(destino.suffix + ".parcial")
     destino.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        resposta = _abrir(url, contexto=None)
-    except urllib.error.URLError as erro:
-        if not isinstance(erro.reason, ssl.SSLCertVerificationError):
-            raise
-        print("  aviso: certificado SSL do INEP não pôde ser verificado; baixando mesmo assim.")
-        sem_verificacao = ssl.create_default_context()
-        sem_verificacao.check_hostname = False
-        sem_verificacao.verify_mode = ssl.CERT_NONE
-        resposta = _abrir(url, contexto=sem_verificacao)
-
-    with resposta:
-        total = int(resposta.headers.get("Content-Length", 0))
-        baixado = 0
-        with parcial.open("wb") as saida:
-            while bloco := resposta.read(PEDACO):
-                saida.write(bloco)
-                baixado += len(bloco)
-                if total:
-                    pct = 100 * baixado / total
-                    print(f"\r  baixando {destino.name}: {baixado / 1e6:,.0f} / {total / 1e6:,.0f} MB ({pct:.0f}%)", end="")
-                else:
-                    print(f"\r  baixando {destino.name}: {baixado / 1e6:,.0f} MB", end="")
-    print()
-    # A integridade real é conferida depois pelo SHA-256 em fontes.json.
-    parcial.replace(destino)
+    if _baixar_urllib(url, parcial) or _baixar_curl(url, parcial):
+        # A integridade real é conferida depois pelo SHA-256 em fontes.json.
+        parcial.replace(destino)
+        return
+    raise RuntimeError(
+        f"Não foi possível baixar {url}.\n"
+        "O servidor do INEP está recusando a conexão. Alternativas:\n"
+        f"  1. Baixe o arquivo pelo navegador e salve em: {destino.parent / (destino.stem + '.zip')}\n"
+        "  2. Rode de novo mais tarde (o download retoma de onde parou)."
+    )
 
 
 def extrair_csv(zip_path: Path, ano: str) -> Path:
@@ -160,7 +224,9 @@ def processar_ano(ano: str, fonte: dict, so_verificar: bool, manter_zip: bool) -
         print(f"[{ano}] integridade confirmada (sha256 {sha[:16]}…)")
 
     extrair_csv(zip_path, ano)
-    if not manter_zip:
+    # Só apaga o ZIP se foi o script que o baixou. Um ZIP que já estava lá
+    # (ex.: baixado à mão pelo navegador) é preservado, para não dar trabalho de novo.
+    if precisa_baixar and not manter_zip:
         zip_path.unlink()
         print(f"[{ano}] ZIP removido (use --manter-zip para conservar)")
     print(f"[{ano}] pronto.")
