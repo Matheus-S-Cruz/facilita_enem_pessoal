@@ -99,6 +99,9 @@ $env:PATH = "$env:HADOOP_HOME\bin;$env:PATH"
 
 ```powershell
 # Windows (na mesma janela onde definiu JAVA_HOME e HADOOP_HOME):
+# Se ainda não tem python 3.11 baixa primeiro:
+winget install Python.Python.3.11
+# Se tem pode pular para:
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 py -m pip install -r etl/requirements.txt
@@ -116,17 +119,6 @@ python etl/run_pipeline.py
 O pipeline baixa os microdados automaticamente a partir de `etl/fontes.json`. Se
 os CSVs já estiverem extraídos em `public/`, acrescente `--sem-download` para ir
 direto ao processamento. A execução leva alguns minutos e cria `data/gold/`.
-
-Depois, versione os dados gerados:
-
-```bash
-git add data/gold etl/volumetria.json etl/fontes.json
-git commit -m "dados: Gold processada do ENEM 2022 e 2023"
-git push
-```
-
-Os microdados pesados (CSV/ZIP) continuam ignorados pelo Git — só a Gold (~11 MB)
-é compartilhada.
 
 ---
 
