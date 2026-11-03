@@ -129,6 +129,9 @@ Carrega a Gold e calcula percentil e Z-Score. **Use Python 3.12 ou mais novo**
 
 ```powershell
 # Windows:
+# Se ainda não tem python 3.12 baixa primeiro:
+winget install Python.Python.3.12
+# Se tem pode pular para:
 cd facilita-backend
 py -3.12 -m venv venv              # ou a versão 3.12+ que você tiver (3.13, 3.14…)
 .\venv\Scripts\Activate.ps1
